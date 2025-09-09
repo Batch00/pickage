@@ -22,7 +22,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('fetchProfile: No user found');
+      return;
+    }
+    
+    console.log('fetchProfile: Fetching profile for user:', user.id);
     
     const { data, error } = await supabase
       .from('profiles')
@@ -30,9 +35,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq('user_id', user.id)
       .maybeSingle();
     
+    console.log('fetchProfile result:', { data, error });
+    
     if (!error && data) {
+      console.log('Setting profile data:', data);
       setProfile(data);
     } else if (!data && !error) {
+      console.log('No profile found, creating new one');
       // Profile doesn't exist yet, create one
       const { data: newProfile, error: createError } = await supabase
         .from('profiles')
@@ -47,9 +56,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .select()
         .single();
       
+      console.log('Profile creation result:', { newProfile, createError });
+      
       if (!createError && newProfile) {
+        console.log('Setting new profile:', newProfile);
         setProfile(newProfile);
       }
+    } else if (error) {
+      console.error('Error fetching profile:', error);
     }
   };
 
