@@ -28,10 +28,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .from('profiles')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
     
     if (!error && data) {
       setProfile(data);
+    } else if (!data && !error) {
+      // Profile doesn't exist yet, create one
+      const { data: newProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: user.id,
+          username: user.user_metadata?.username,
+          display_name: user.user_metadata?.username || user.email?.split('@')[0],
+          balance: 0,
+          total_bets: 0,
+          total_winnings: 0
+        })
+        .select()
+        .single();
+      
+      if (!createError && newProfile) {
+        setProfile(newProfile);
+      }
     }
   };
 
